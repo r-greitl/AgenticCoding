@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# virtuelle Umgebung
+.venv/
+venv/
+
+# VS Code
+.vscode/
+
+# lokale Einstellungen
+.idea/
+
+# Betriebssystem
+Thumbs.db
+.DS_Store
+
+# Testdateien
+export_test.csv
+
+# Backups
+*.bak
+
+# Persönliche Kontaktdaten
+kontakte.json
+kontakte_backup.json
+kontakte.tmp
