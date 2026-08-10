@@ -3,6 +3,7 @@ from tkinter import filedialog
 
 import dialoge
 import datei
+import kontaktexport
 import kontaktimport
 import kontaktlogik
 
@@ -680,6 +681,52 @@ def kontakte_aus_datei_importieren():
 
         dialoge.speicherfehler_import()
 
+
+def kontakte_exportieren(zu_exportierende_kontakte, exportformat):
+    """Steuert den Export einer uebergebenen Kontaktliste."""
+
+    if not zu_exportierende_kontakte:
+        dialoge.export_hinweis(
+            "Es sind keine Kontakte fuer den Export vorhanden."
+        )
+        return
+
+    exportformat = exportformat.casefold()
+
+    if exportformat != "vcard":
+        dialoge.export_fehler(
+            f"Das Exportformat {exportformat} wird nicht unterstuetzt."
+        )
+        return
+
+    dateiname = filedialog.asksaveasfilename(
+        title="Kontakte als vCard exportieren",
+        defaultextension=".vcf",
+        filetypes=[
+            ("vCard-Dateien", "*.vcf"),
+            ("Alle Dateien", "*.*"),
+        ],
+    )
+
+    if not dateiname:
+        return
+
+    erfolgreich, fehlermeldung = (
+        kontaktexport.kontakte_als_vcard_exportieren(
+            zu_exportierende_kontakte,
+            dateiname,
+        )
+    )
+
+    if erfolgreich:
+        dialoge.export_erfolgreich(
+            len(zu_exportierende_kontakte),
+            "vCard",
+        )
+    else:
+        dialoge.export_fehler(fehlermeldung)
+
+
 def menueleiste_erstellen():
     menueleiste = tk.Menu(fenster)
 
@@ -697,6 +744,21 @@ def menueleiste_erstellen():
     accelerator="Strg+I",
     command=kontakte_aus_datei_importieren,
 )
+    datei_menu.add_separator()
+    datei_menu.add_command(
+        label="Alle Kontakte als vCard exportieren …",
+        command=lambda: kontakte_exportieren(
+            kontaktliste,
+            "vCard",
+        ),
+    )
+    datei_menu.add_command(
+        label="Sichtbare Kontakte als vCard exportieren …",
+        command=lambda: kontakte_exportieren(
+            angezeigte_kontakte,
+            "vCard",
+        ),
+    )
     datei_menu.add_separator()
     datei_menu.add_command(
         label="Beenden",

@@ -208,3 +208,33 @@ def speicherfehler_import():
         "Die importierten Kontakte konnten nicht "
         "gespeichert werden.",
     )
+
+
+def export_hinweis(meldung):
+    """Zeigt einen Hinweis zu einer leeren Exportauswahl."""
+
+    messagebox.showinfo(
+        "Kontaktexport",
+        meldung,
+    )
+
+
+def export_erfolgreich(anzahl, exportformat):
+    """Bestaetigt einen erfolgreichen Kontaktexport."""
+
+    wort = "Kontakt wurde" if anzahl == 1 else "Kontakte wurden"
+    messagebox.showinfo(
+        "Export abgeschlossen",
+        f"{anzahl} {wort} erfolgreich als "
+        f"{exportformat} exportiert.",
+    )
+
+
+def export_fehler(meldung):
+    """Zeigt einen Fehler beim Exportieren von Kontakten."""
+
+    messagebox.showerror(
+        "Export fehlgeschlagen",
+        "Die Kontakte konnten nicht exportiert werden.\n\n"
+        f"{meldung}",
+    )
