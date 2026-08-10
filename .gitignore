@@ -24,6 +24,9 @@ export_test.csv
 # Backups
 *.bak
 
+
+*.vcf
+
 # Persönliche Kontaktdaten
 kontakte.json
 kontakte_backup.json
