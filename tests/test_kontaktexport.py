@@ -31,6 +31,23 @@ class VCardExportTests(unittest.TestCase):
         self.assertIn("BDAY:1815-12-10\r\n", vcard)
         self.assertNotIn("ALTER", vcard)
 
+    def test_kategorie_wird_exportiert(self):
+        vcard = kontaktexport.kontakt_als_vcard({
+            "name": "Testkontakt",
+            "kategorie": "Familie",
+        })
+
+        self.assertIn("CATEGORIES:Familie\r\n", vcard)
+
+    def test_leere_oder_unbekannte_kategorie_wird_ausgelassen(self):
+        for kategorie in ("", "Sport"):
+            with self.subTest(kategorie=kategorie):
+                vcard = kontaktexport.kontakt_als_vcard({
+                    "name": "Testkontakt",
+                    "kategorie": kategorie,
+                })
+                self.assertNotIn("CATEGORIES:", vcard)
+
     def test_mehrere_kontakte_werden_exportiert(self):
         kontakte = [
             {"name": "Erster"},
@@ -118,6 +135,7 @@ class VCardExportTests(unittest.TestCase):
             "wohnort": "Köln",
             "beruf": "Entwickler",
             "geburtstag": "1990-01-02",
+            "kategorie": "Arbeit",
         }
 
         with tempfile.TemporaryDirectory() as verzeichnis:

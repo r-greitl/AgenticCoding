@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from kontaktfelder import kategorie_normalisieren
+
 
 def vcard_wert_escapen(wert: Any) -> str:
     """Escapet einen Textwert fuer vCard 3.0."""
@@ -45,6 +47,14 @@ def kontakt_als_vcard(kontakt: Mapping[str, Any]) -> str:
     if wohnort:
         zeilen.append(
             f"ADR:;;;{vcard_wert_escapen(wohnort)};;;"
+        )
+
+    kategorie = kategorie_normalisieren(
+        kontakt.get("kategorie", "")
+    )
+    if kategorie:
+        zeilen.append(
+            f"CATEGORIES:{vcard_wert_escapen(kategorie)}"
         )
 
     zeilen.append("END:VCARD")

@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, ttk
 
 import dialoge
 import datei
@@ -9,6 +9,8 @@ import kontaktlogik
 
 from kontaktfelder import (
     FELDER,
+    KATEGORIEN,
+    kategorie_normalisieren,
     kontakt_aus_eingabefeldern,
     kontakt_vervollstaendigen,
 )
@@ -279,12 +281,19 @@ def formular_erstellen(titel, kontakt=None):
             
         ).pack(side="left")
 
-        eingabe = tk.Entry(
-            zeile,
-            
-            relief="solid",
-            bd=1,
-        )
+        if feldname == "kategorie":
+            eingabe = ttk.Combobox(
+                zeile,
+                values=("", *KATEGORIEN),
+                state="readonly",
+            )
+        else:
+            eingabe = tk.Entry(
+                zeile,
+                relief="solid",
+                bd=1,
+            )
+
         eingabe.pack(
             side="left",
             fill="x",
@@ -293,7 +302,11 @@ def formular_erstellen(titel, kontakt=None):
         )
 
         if kontakt is not None:
-            eingabe.insert(0, kontakt.get(feldname, ""))
+            wert = kontakt.get(feldname, "")
+            if feldname == "kategorie":
+                eingabe.set(kategorie_normalisieren(wert))
+            else:
+                eingabe.insert(0, wert)
 
         eingabefelder[feldname] = eingabe
 

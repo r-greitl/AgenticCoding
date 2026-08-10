@@ -2,6 +2,8 @@
 
 import re
 
+from kontaktfelder import KATEGORIEN
+
 
 def kontakt_validieren(kontakt):
     """
@@ -17,6 +19,7 @@ def kontakt_validieren(kontakt):
     alter = kontakt.get("alter", "").strip()
     telefon = kontakt.get("telefon", "").strip()
     email = kontakt.get("email", "").strip()
+    kategorie = kontakt.get("kategorie", "").strip()
 
     if not name:
         return False, "Bitte geben Sie einen Namen ein."
@@ -44,6 +47,9 @@ def kontakt_validieren(kontakt):
 
     if len(wohnort) > 100:
         return False, "Der Wohnort darf höchstens 100 Zeichen enthalten."
+
+    if kategorie and kategorie not in KATEGORIEN:
+        return False, "Bitte wählen Sie eine gültige Kategorie aus."
 
     return True, ""
 

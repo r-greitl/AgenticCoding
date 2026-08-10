@@ -6,7 +6,7 @@ import csv
 from pathlib import Path
 from typing import Any
 
-from kontaktfelder import leerer_kontakt
+from kontaktfelder import kategorie_normalisieren, leerer_kontakt
 from validierung import kontakt_validieren
 
 
@@ -20,6 +20,7 @@ SPALTEN_ALIASE = {
     "telefon": {"telefon", "telefonnummer", "phone", "phone number", "mobile phone", "mobile", "home phone", "business phone", "primary phone"},
     "email": {"email", "e-mail", "e-mail address", "email address", "primary email"},
     "geburtstag": {"geburtstag", "birthday", "birth date", "date of birth"},
+    "kategorie": {"kategorie", "category"},
 }
 
 
@@ -51,6 +52,9 @@ def _kontakt_aus_csv_zeile(zeile: dict[str, Any]) -> dict[str, str]:
         "telefon": _wert_aus_zeile(zeile, "telefon"),
         "email": _wert_aus_zeile(zeile, "email"),
         "geburtstag": _wert_aus_zeile(zeile, "geburtstag"),
+        "kategorie": kategorie_normalisieren(
+            _wert_aus_zeile(zeile, "kategorie")
+        ),
     })
     return kontakt
 
@@ -116,6 +120,7 @@ def _vcard_eintraege(text: str) -> list[list[str]]:
 def _kontakt_aus_vcard(zeilen: list[str]) -> dict[str, str]:
     kontakt = leerer_kontakt()
     namensbestandteile: list[str] = []
+    kategoriewerte: list[str] = []
 
     for zeile in zeilen:
         if ":" not in zeile:
@@ -142,12 +147,24 @@ def _kontakt_aus_vcard(zeilen: list[str]) -> dict[str, str]:
             kontakt["beruf"] = wert.replace(";", " – ")
         elif eigenschaft == "BDAY" and not kontakt["geburtstag"]:
             kontakt["geburtstag"] = wert
+        elif eigenschaft == "CATEGORIES":
+            kategoriewerte.extend(
+                teil.strip()
+                for teil in wert.split(",")
+                if teil.strip()
+            )
         elif eigenschaft == "ADR" and not kontakt["wohnort"]:
             bestandteile = wert.split(";")
             kontakt["wohnort"] = bestandteile[3].strip() if len(bestandteile) > 3 else ""
 
     if not kontakt["name"] and namensbestandteile:
         kontakt["name"] = " ".join(namensbestandteile)
+
+    if len(kategoriewerte) == 1:
+        kontakt["kategorie"] = kategorie_normalisieren(
+            kategoriewerte[0]
+        )
+
     return kontakt
 
 

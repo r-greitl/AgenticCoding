@@ -1,6 +1,15 @@
 """Felddefinitionen und Hilfsfunktionen für Kontakte."""
 
 
+KATEGORIEN = (
+    "Familie",
+    "Freunde",
+    "Arbeit",
+    "Verein",
+    "Sonstiges",
+)
+
+
 FELDER = [
     ("Name", "name"),
     ("Wohnort", "wohnort"),
@@ -9,7 +18,20 @@ FELDER = [
     ("Telefonnummer", "telefon"),
     ("E-Mail", "email"),
     ("Geburtstag", "geburtstag"),
+    ("Kategorie", "kategorie"),
 ]
+
+
+def kategorie_normalisieren(wert):
+    """Gibt eine bekannte Kategorie in kanonischer Schreibweise zurück."""
+
+    normalisierter_wert = str(wert or "").strip().casefold()
+
+    for kategorie in KATEGORIEN:
+        if normalisierter_wert == kategorie.casefold():
+            return kategorie
+
+    return ""
 
 
 def kontakt_aus_eingabefeldern(eingabefelder):
@@ -28,6 +50,8 @@ def leerer_kontakt():
         feldname: ""
         for _, feldname in FELDER
     }
+
+
 def kontakt_vervollstaendigen(kontakt):
     """Ergänzt fehlende Felder eines vorhandenen Kontakts."""
 
