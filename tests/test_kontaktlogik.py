@@ -40,6 +40,14 @@ class KontaktlogikTests(unittest.TestCase):
 
         self.assertEqual(self.kontakte, erwartet)
 
+    def test_fotopfad_wird_nicht_durchsucht(self):
+        kontakte = [{"name": "Anna", "foto": "bilder/geheim.png"}]
+
+        self.assertEqual(
+            kontaktlogik.kontakte_suchen(kontakte, "geheim"),
+            [],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -253,6 +253,21 @@ class VCardExportTests(unittest.TestCase):
                 vorhandener_inhalt,
             )
 
+    def test_foto_wird_nicht_exportiert_und_kategorie_bleibt(self):
+        kontakt = {
+            "name": "Testkontakt",
+            "kategorie": "Familie",
+            "foto": "bilder/vertraulich.png",
+        }
+        erwartet = kontakt.copy()
+
+        vcard = kontaktexport.kontakt_als_vcard(kontakt)
+
+        self.assertIn("CATEGORIES:Familie\r\n", vcard)
+        self.assertNotIn("PHOTO", vcard)
+        self.assertNotIn("vertraulich", vcard)
+        self.assertEqual(kontakt, erwartet)
+
 
 if __name__ == "__main__":
     unittest.main()
