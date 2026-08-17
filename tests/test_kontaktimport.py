@@ -120,6 +120,22 @@ class KategorieImportTests(unittest.TestCase):
         self.assertEqual(fehler, [])
         self.assertEqual(kontakte[0]["kategorie"], "")
 
+    def test_csv_fotospalte_wird_ignoriert(self):
+        kontakte, fehler = self._csv_importieren(
+            "Name;Foto\nTestkontakt;bilder/falsch.png\n"
+        )
+
+        self.assertEqual(fehler, [])
+        self.assertEqual(kontakte[0]["foto"], "")
+
+    def test_vcard_photo_wird_ignoriert(self):
+        kontakte, fehler = self._vcard_importieren(
+            "PHOTO;ENCODING=b;TYPE=PNG:iVBORw0KGgo=\r\n"
+        )
+
+        self.assertEqual(fehler, [])
+        self.assertEqual(kontakte[0]["foto"], "")
+
 
 if __name__ == "__main__":
     unittest.main()

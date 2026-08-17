@@ -54,6 +54,29 @@ class KontaktfelderTests(unittest.TestCase):
     def test_unbekannte_kategorie_wird_leer_normalisiert(self):
         self.assertEqual(kategorie_normalisieren("Sport"), "")
 
+    def test_leerer_kontakt_enthaelt_leeres_foto(self):
+        self.assertEqual(leerer_kontakt()["foto"], "")
+
+    def test_alter_kontakt_wird_ohne_mutation_vervollstaendigt(self):
+        kontakt = {"name": "Alt", "kategorie": "Familie"}
+
+        vollstaendig = kontakt_vervollstaendigen(kontakt)
+
+        self.assertEqual(vollstaendig["foto"], "")
+        self.assertEqual(kontakt, {"name": "Alt", "kategorie": "Familie"})
+
+    def test_kategorie_und_foto_bleiben_erhalten(self):
+        kontakt = {
+            "name": "Kontakt",
+            "kategorie": "Freunde",
+            "foto": "bilder/beispiel.png",
+        }
+
+        self.assertEqual(kontakt_vervollstaendigen(kontakt), {
+            **leerer_kontakt(),
+            **kontakt,
+        })
+
 
 if __name__ == "__main__":
     unittest.main()

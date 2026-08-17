@@ -48,6 +48,16 @@ class KategorieDateiTests(unittest.TestCase):
 
         self.assertEqual(datei.kontakte_laden(), kontakte)
 
+    def test_kategorie_und_relatives_foto_bleiben_erhalten(self):
+        kontakte = [{
+            "name": "Testkontakt",
+            "kategorie": "Arbeit",
+            "foto": "bilder/foto.gif",
+        }]
+
+        self.assertTrue(datei.kontakte_speichern(kontakte))
+        self.assertEqual(datei.kontakte_laden(), kontakte)
+
 
 if __name__ == "__main__":
     unittest.main()

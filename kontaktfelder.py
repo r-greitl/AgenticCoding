@@ -21,6 +21,11 @@ FELDER = [
     ("Kategorie", "kategorie"),
 ]
 
+FOTO_FELD = "foto"
+PERSISTIERTE_FELDER = tuple(
+    feldname for _, feldname in FELDER
+) + (FOTO_FELD,)
+
 
 def kategorie_normalisieren(wert):
     """Gibt eine bekannte Kategorie in kanonischer Schreibweise zurück."""
@@ -46,10 +51,7 @@ def kontakt_aus_eingabefeldern(eingabefelder):
 def leerer_kontakt():
     """Erzeugt einen leeren Kontakt mit allen vorgesehenen Feldern."""
 
-    return {
-        feldname: ""
-        for _, feldname in FELDER
-    }
+    return {feldname: "" for feldname in PERSISTIERTE_FELDER}
 
 
 def kontakt_vervollstaendigen(kontakt):

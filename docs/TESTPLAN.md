@@ -51,3 +51,33 @@ python -m unittest discover -s tests
 - CSV- und vCard-Import bestehender Dateien
 - vCard-Export aller und sichtbarer Kontakte
 - JSON-Speicherung und Datensicherung
+
+## Sprint 4: Kontaktfotos
+
+### Automatische Tests
+
+- Rueckwaertskompatibilitaet und `foto == ""` bei alten/leeren Kontakten
+- Erhalt von Kategorie und relativem Fotopfad ohne Mutation der Quelldaten
+- sichere Pfadauflösung nur innerhalb des verwalteten Bilderordners
+- Ablehnung absoluter Pfade und von Pfad-Traversal
+- Kopieren von PNG/GIF mit eindeutigen Namen
+- fehlende Quelldatei und nicht unterstuetzte Dateiendung
+- kontrolliertes Loeschen ausschliesslich verwalteter Dateien
+- Kategorie bleibt durchsuchbar; Fotopfad ist nicht durchsuchbar
+- CSV-/vCard-Import setzt `foto == ""` und ignoriert vCard-PHOTO
+- vCard-Export enthaelt weder PHOTO noch Fotopfad; CATEGORIES bleibt erhalten
+
+Ausfuehrung:
+
+```bash
+python -m unittest discover -s tests
+```
+
+### Manuelle Regression
+
+- PNG und GIF beim neuen Kontakt auswaehlen, Vorschau pruefen und speichern
+- vorhandenes Foto beim Bearbeiten ersetzen und entfernen
+- Auswahl/Entfernung abbrechen und unveraenderte Daten/Dateien pruefen
+- fehlende und beschaedigte verwaltete Bilddatei in Detail/Formular anzeigen
+- simulierten JSON-Speicherfehler beim Anlegen und Ersetzen pruefen
+- Programmstart, Anlegen, Bearbeiten, Loeschen, Suche, Import und Export

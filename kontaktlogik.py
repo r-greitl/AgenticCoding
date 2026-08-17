@@ -1,5 +1,10 @@
 """Allgemeine Funktionen zur Verarbeitung von Kontakten."""
 
+from kontaktfelder import FELDER
+
+
+SUCHFELDER = tuple(feldname for _, feldname in FELDER)
+
 
 def kontakte_sortieren(kontaktliste):
     """
@@ -36,7 +41,8 @@ def kontakte_suchen(kontaktliste, suchtext):
     for kontakt in kontaktliste:
         kontakt_gefunden = any(
             suchtext in str(wert).casefold()
-            for wert in kontakt.values()
+            for feldname in SUCHFELDER
+            for wert in (kontakt.get(feldname, ""),)
         )
 
         if kontakt_gefunden:

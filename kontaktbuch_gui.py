@@ -6,9 +6,11 @@ import datei
 import kontaktexport
 import kontaktimport
 import kontaktlogik
+import kontaktfoto
 
 from kontaktfelder import (
     FELDER,
+    FOTO_FELD,
     KATEGORIEN,
     kategorie_normalisieren,
     kontakt_aus_eingabefeldern,
@@ -48,10 +50,17 @@ from styles import (
 
 geladene_kontakte = datei.kontakte_laden()
 
-kontaktliste = [
-    kontakt_vervollstaendigen(kontakt)
-    for kontakt in geladene_kontakte
-]
+kontaktliste = []
+for geladener_kontakt in geladene_kontakte:
+    kontakt = kontakt_vervollstaendigen(geladener_kontakt)
+    if (
+        kontakt[FOTO_FELD]
+        and kontaktfoto.verwalteten_pfad_aufloesen(
+            kontakt[FOTO_FELD]
+        ) is None
+    ):
+        kontakt[FOTO_FELD] = ""
+    kontaktliste.append(kontakt)
 
 kontaktliste = kontaktlogik.kontakte_sortieren(
     kontaktliste
@@ -310,8 +319,83 @@ def formular_erstellen(titel, kontakt=None):
 
         eingabefelder[feldname] = eingabe
 
+    fotoauswahl = {
+        "quelle": None,
+        "entfernen": False,
+        "alt": kontakt.get(FOTO_FELD, "") if kontakt else "",
+    }
+    fotobereich = tk.Frame(detailbereich)
+    fotobereich.pack(fill="x", pady=8)
+    tk.Label(
+        fotobereich,
+        text="Foto:",
+        width=15,
+        anchor="w",
+    ).pack(side="left")
+    vorschau = tk.Label(fotobereich, text="Kein Foto", anchor="w")
+    vorschau.pack(side="left", padx=(0, 10))
+
+    def vorschau_aktualisieren():
+        bildpfad = None
+        if fotoauswahl["quelle"]:
+            bildpfad = fotoauswahl["quelle"]
+        elif not fotoauswahl["entfernen"]:
+            bildpfad = kontaktfoto.verwalteten_pfad_aufloesen(
+                fotoauswahl["alt"]
+            )
+
+        vorschau.configure(image="", text="Kein Foto")
+        vorschau.image = None
+        if bildpfad is None:
+            return
+        try:
+            bild = tk.PhotoImage(file=str(bildpfad))
+            faktor = max(1, (max(bild.width(), bild.height()) + 159) // 160)
+            if faktor > 1:
+                bild = bild.subsample(faktor, faktor)
+            vorschau.configure(image=bild, text="")
+            vorschau.image = bild
+        except (OSError, tk.TclError):
+            vorschau.configure(text="Foto nicht verfuegbar")
+
+    def foto_auswaehlen():
+        dateiname = filedialog.askopenfilename(
+            title="Kontaktfoto auswaehlen",
+            filetypes=[
+                ("Bilddateien", "*.png *.gif"),
+                ("PNG-Dateien", "*.png"),
+                ("GIF-Dateien", "*.gif"),
+            ],
+        )
+        if dateiname:
+            fotoauswahl["quelle"] = dateiname
+            fotoauswahl["entfernen"] = False
+            vorschau_aktualisieren()
+
+    def foto_entfernen():
+        fotoauswahl["quelle"] = None
+        fotoauswahl["entfernen"] = True
+        vorschau_aktualisieren()
+
+    button_erstellen(
+        fotobereich,
+        "Auswaehlen",
+        foto_auswaehlen,
+        FARBE_PRIMAER,
+        FARBE_PRIMAER_AKTIV,
+    ).pack(side="left", padx=3)
+    button_erstellen(
+        fotobereich,
+        "Entfernen",
+        foto_entfernen,
+        FARBE_GEFAHR,
+        FARBE_GEFAHR_AKTIV,
+    ).pack(side="left", padx=3)
+    vorschau_aktualisieren()
+
     eingabefelder["name"].focus_set()
-    return eingabefelder
+    return eingabefelder, fotoauswahl
+
 
 def kontakt_anzeigetext(kontakt):
     """Erstellt den Text für einen Eintrag in der Kontaktliste."""
@@ -389,6 +473,22 @@ def kontakt_auswahl_anzeigen(event=None):
             
         ).pack(side="left", fill="x", expand=True)
 
+    fotopfad = kontakt.get(FOTO_FELD, "")
+    bildpfad = kontaktfoto.verwalteten_pfad_aufloesen(fotopfad)
+    beschriftung = "Foto nicht verfuegbar" if fotopfad else "Kein Foto"
+    foto_label = tk.Label(detailbereich, text=beschriftung)
+    foto_label.pack(anchor="w", pady=(12, 0))
+    if bildpfad is not None:
+        try:
+            bild = tk.PhotoImage(file=str(bildpfad))
+            faktor = max(1, (max(bild.width(), bild.height()) + 199) // 200)
+            if faktor > 1:
+                bild = bild.subsample(faktor, faktor)
+            foto_label.configure(image=bild, text="")
+            foto_label.image = bild
+        except (OSError, tk.TclError):
+            pass
+
     buttonbereich_erstellen()
 
 def kontaktliste_sortieren():
@@ -402,7 +502,7 @@ def kontaktliste_sortieren():
     kontaktliste.extend(sortierte_kontakte)
 
 def neuer_kontakt_formular():
-    eingabefelder = formular_erstellen(
+    eingabefelder, fotoauswahl = formular_erstellen(
         "Neuen Kontakt anlegen"
     )
 
@@ -427,9 +527,23 @@ def neuer_kontakt_formular():
                 return
 
         kontaktliste.append(neuer_kontakt)
-        kontaktliste_sortieren()
+        try:
+            erfolgreich = kontaktfoto.kontaktfoto_speichern(
+                neuer_kontakt,
+                neuer_kontakt,
+                lambda: (
+                    kontaktliste_sortieren()
+                    or datei.kontakte_speichern(kontaktliste)
+                ),
+                quelldatei=fotoauswahl["quelle"],
+                entfernen=fotoauswahl["entfernen"],
+            )
+        except (OSError, ValueError) as fehler:
+            kontaktliste.remove(neuer_kontakt)
+            dialoge.ungueltige_eingabe(str(fehler))
+            return
 
-        if datei.kontakte_speichern(kontaktliste):
+        if erfolgreich:
             kontakte_filtern()
             startansicht_anzeigen()
             dialoge.kontakt_gespeichert()
@@ -479,7 +593,7 @@ def kontakt_bearbeiten_formular():
     index = auswahl[0]
     kontakt = angezeigte_kontakte[index]
 
-    eingabefelder = formular_erstellen(
+    eingabefelder, fotoauswahl = formular_erstellen(
         "Kontakt bearbeiten",
         kontakt,
     )
@@ -505,22 +619,27 @@ def kontakt_bearbeiten_formular():
             if not dialoge.dublette_bearbeiten_bestaetigen():
                 return
 
-        alter_kontakt = kontakt.copy()
+        try:
+            erfolgreich = kontaktfoto.kontaktfoto_speichern(
+                kontakt,
+                geaenderter_kontakt,
+                lambda: (
+                    kontaktliste_sortieren()
+                    or datei.kontakte_speichern(kontaktliste)
+                ),
+                quelldatei=fotoauswahl["quelle"],
+                entfernen=fotoauswahl["entfernen"],
+            )
+        except (OSError, ValueError) as fehler:
+            dialoge.ungueltige_eingabe(str(fehler))
+            return
 
-        kontakt.clear()
-        kontakt.update(geaenderter_kontakt)
-
-        kontaktliste_sortieren()
-
-        if datei.kontakte_speichern(kontaktliste):
+        if erfolgreich:
             kontakte_filtern()
             startansicht_anzeigen()
             dialoge.kontakt_geaendert()
 
         else:
-            kontakt.clear()
-            kontakt.update(alter_kontakt)
-
             kontaktliste_sortieren()
             kontakte_filtern()
 
@@ -574,6 +693,7 @@ def kontakt_loeschen():
     kontaktliste.remove(kontakt)
 
     if datei.kontakte_speichern(kontaktliste):
+        kontaktfoto.foto_loeschen(kontakt.get(FOTO_FELD, ""))
         kontakte_filtern()
         startansicht_anzeigen()
         dialoge.kontakt_geloescht()
