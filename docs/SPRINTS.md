@@ -47,3 +47,31 @@ Status: FREIGEGEBEN
 Automatische und manuelle Akzeptanztests wurden erfolgreich abgeschlossen.
 
 Datum: 17.08.2026
+## Sprint 5 – GUI entkoppeln und testbar machen
+
+Status: abgeschlossen
+
+Umgesetzt:
+- GUI-Startlogik vom Modulimport entkoppelt
+- `import kontaktbuch_gui` startet keine GUI mehr
+- Kontakte werden beim Import nicht geladen
+- Tkinter-Fenster und Widgets werden erst beim Programmstart erzeugt
+- explizite Initialisierung von Laufzeitdaten, Oberfläche und Ereignissen
+- Start über `main()` und `if __name__ == "__main__":`
+- bestehende globale Callback-Struktur bewusst beibehalten
+- keine App-Klasse eingeführt
+
+Qualitätssicherung:
+- 66 automatische Tests bestanden
+- unabhängiger Review: FREIGEBEN
+- Syntaxprüfung erfolgreich
+- `git diff --check` erfolgreich
+- manuelle GUI-Regressionstests erfolgreich
+- headless Import ohne GUI-Nebenwirkungen geprüft
+
+Bekannter, nicht durch Sprint 5 verursachter Fehler:
+- bestimmte kommagetrennte Outlook-CSV-Dateien können bei fehlgeschlagener
+  automatischer Trennzeichenerkennung nicht importiert werden
+- separater Bugfix vorgesehen
+
+Freigabe erteilt.

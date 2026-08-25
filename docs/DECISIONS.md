@@ -81,3 +81,26 @@ alle Eintraege aus `FELDER`, einschliesslich `kategorie`, aber nicht `foto`.
 - Fehlende, beschaedigte oder unsichere gespeicherte Fotos werden nicht
   geoeffnet und bringen die Anwendung nicht zum Absturz.
 - Sprint 4 unterstuetzt ohne zusaetzliche Bibliothek ausschliesslich PNG/GIF.
+
+## ADR-004: Expliziter Start der Tkinter-Oberflaeche
+
+### Status
+Akzeptiert
+
+### Kontext
+`kontaktbuch_gui.py` fuehrte bisher bereits beim Import JSON-Zugriffe und den
+vollstaendigen Tkinter-Start bis zum Mainloop aus. Dadurch war das Modul nicht
+nebenwirkungsfrei importierbar oder headless testbar.
+
+### Entscheidung
+Laufzeitdaten, Oberflaechenaufbau und Ereignisbindungen werden durch
+`laufzeitdaten_initialisieren()`, `oberflaeche_initialisieren()` und
+`ereignisse_binden()` getrennt initialisiert. `main()` ruft diese Schritte in
+der definierten Startreihenfolge auf. Nur der `__main__`-Guard ruft `main()`.
+Bestehende Callbacks duerfen weiterhin die neutral vorbelegten Modulglobalen
+verwenden; eine App-Klasse wird nicht eingefuehrt.
+
+### Konsequenzen
+- Ein Import laedt keine Kontakte und erzeugt keine Tkinter-Objekte.
+- Der direkte Skriptstart zeigt weiterhin die vollstaendige Anwendung.
+- Die Startreihenfolge kann ohne echte GUI automatisiert getestet werden.
