@@ -3,6 +3,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import kontaktimport
 
@@ -35,6 +36,85 @@ class KategorieImportTests(unittest.TestCase):
 
         self.assertEqual(fehler, [])
         self.assertEqual(kontakte[0]["kategorie"], "")
+
+    def test_outlook_csv_nutzt_komma_fallback(self):
+        inhalt = (
+            "First Name,Last Name,E-mail Address,Business Phone\n"
+            "Max,Mustermann,max@example.org,+49 123 456\n"
+        )
+        urspruengliches_trennzeichen = kontaktimport.csv.excel.delimiter
+
+        with mock.patch.object(
+            kontaktimport.csv.Sniffer,
+            "sniff",
+            side_effect=kontaktimport.csv.Error,
+        ):
+            kontakte, fehler = self._csv_importieren(inhalt)
+
+        self.assertEqual(fehler, [])
+        self.assertEqual(len(kontakte), 1)
+        self.assertEqual(kontakte[0]["name"], "Max Mustermann")
+        self.assertEqual(kontakte[0]["email"], "max@example.org")
+        self.assertEqual(kontakte[0]["telefon"], "+49 123 456")
+        self.assertEqual(
+            kontaktimport.csv.excel.delimiter,
+            urspruengliches_trennzeichen,
+        )
+
+    def test_csv_fallback_ueberspringt_fuehrende_leerzeilen(self):
+        inhalt = (
+            "\n"
+            "\n"
+            "First Name,Last Name,E-mail Address\n"
+            "Max,Mustermann,max@example.org\n"
+        )
+
+        with mock.patch.object(
+            kontaktimport.csv.Sniffer,
+            "sniff",
+            side_effect=kontaktimport.csv.Error,
+        ):
+            kontakte, fehler = self._csv_importieren(inhalt)
+
+        self.assertEqual(fehler, [])
+        self.assertEqual(len(kontakte), 1)
+        self.assertEqual(kontakte[0]["name"], "Max Mustermann")
+        self.assertEqual(kontakte[0]["email"], "max@example.org")
+
+    def test_semikolon_csv_nutzt_semikolon_fallback(self):
+        inhalt = (
+            "Name;E-Mail;Telefon\n"
+            "Testkontakt;test@example.org;+49 123\n"
+        )
+
+        with mock.patch.object(
+            kontaktimport.csv.Sniffer,
+            "sniff",
+            side_effect=kontaktimport.csv.Error,
+        ):
+            kontakte, fehler = self._csv_importieren(inhalt)
+
+        self.assertEqual(fehler, [])
+        self.assertEqual(len(kontakte), 1)
+        self.assertEqual(kontakte[0]["name"], "Testkontakt")
+        self.assertEqual(kontakte[0]["email"], "test@example.org")
+        self.assertEqual(kontakte[0]["telefon"], "+49 123")
+
+    def test_csv_trennzeichen_fallback(self):
+        faelle = (
+            ("Name,E-Mail", ","),
+            ("Name;E-Mail", ";"),
+            ("Name\tE-Mail", "\t"),
+            ("Name|E-Mail", "|"),
+            ("Name", ";"),
+        )
+
+        for kopfzeile, erwartet in faelle:
+            with self.subTest(kopfzeile=kopfzeile):
+                self.assertEqual(
+                    kontaktimport._csv_trennzeichen_fallback(kopfzeile),
+                    erwartet,
+                )
 
     def test_csv_kategorie_wird_kanonisch_importiert(self):
         kontakte, fehler = self._csv_importieren(

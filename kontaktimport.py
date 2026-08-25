@@ -59,6 +59,22 @@ def _kontakt_aus_csv_zeile(zeile: dict[str, Any]) -> dict[str, str]:
     return kontakt
 
 
+def _csv_trennzeichen_fallback(probe: str) -> str:
+    """Ermittelt das haeufigste Trennzeichen aus der Kopfzeile."""
+
+    kopfzeile = next(
+        (zeile for zeile in probe.splitlines() if zeile.strip()),
+        "",
+    )
+    kandidaten = (",", ";", "\t", "|")
+    trennzeichen = max(kandidaten, key=kopfzeile.count)
+
+    if kopfzeile.count(trennzeichen) == 0:
+        return ";"
+
+    return trennzeichen
+
+
 def _csv_lesen(dateipfad: Path) -> list[dict[str, str]]:
     letzte_exception: Exception | None = None
     for encoding in ("utf-8-sig", "utf-8", "cp1252"):
@@ -69,9 +85,20 @@ def _csv_lesen(dateipfad: Path) -> list[dict[str, str]]:
                 try:
                     dialekt = csv.Sniffer().sniff(probe, delimiters=",;\t|")
                 except csv.Error:
-                    dialekt = csv.excel
-                    dialekt.delimiter = ";"
-                leser = csv.DictReader(datei, dialect=dialekt)
+                    trennzeichen = _csv_trennzeichen_fallback(probe)
+                    dialekt = None
+
+                while True:
+                    zeilenanfang = datei.tell()
+                    zeile = datei.readline()
+                    if not zeile or zeile.strip():
+                        datei.seek(zeilenanfang)
+                        break
+
+                if dialekt is None:
+                    leser = csv.DictReader(datei, delimiter=trennzeichen)
+                else:
+                    leser = csv.DictReader(datei, dialect=dialekt)
                 return [_kontakt_aus_csv_zeile(zeile) for zeile in leser if zeile]
         except (UnicodeDecodeError, OSError) as fehler:
             letzte_exception = fehler
