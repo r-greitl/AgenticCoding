@@ -81,3 +81,22 @@ python -m unittest discover -s tests
 - fehlende und beschaedigte verwaltete Bilddatei in Detail/Formular anzeigen
 - simulierten JSON-Speicherfehler beim Anlegen und Ersetzen pruefen
 - Programmstart, Anlegen, Bearbeiten, Loeschen, Suche, Import und Export
+
+## Sprint 5: Nebenwirkungsfreier GUI-Import
+
+### Automatische Tests
+
+- Import erzeugt weder `tk.Tk()` noch Widgets oder einen Mainloop
+- Import ruft `datei.kontakte_laden()` nicht auf
+- Import erzeugt oder veraendert `kontakte.json` nicht
+- Import funktioniert in einem headless Subprozess
+- `main()` startet Daten, GUI, Darstellung, Menue, Ereignisse, Fokus und
+  Mainloop in der festgelegten Reihenfolge
+
+### Manuelle Regression
+
+- normaler Programmstart mit `python kontaktbuch_gui.py`
+- Laden und Anzeigen vorhandener Kontakte
+- Anlegen, Bearbeiten und Loeschen einschliesslich Kontaktfotos
+- Suche, Kategorien, Import und Export
+- Tastaturbindungen, Menue, Fenster-Schliessen und Fokus im Suchfeld

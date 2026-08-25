@@ -48,165 +48,118 @@ from styles import (
     FENSTER_MIN_HOEHE,
 )
 
-geladene_kontakte = datei.kontakte_laden()
-
 kontaktliste = []
-for geladener_kontakt in geladene_kontakte:
-    kontakt = kontakt_vervollstaendigen(geladener_kontakt)
-    if (
-        kontakt[FOTO_FELD]
-        and kontaktfoto.verwalteten_pfad_aufloesen(
+angezeigte_kontakte = []
+fenster = None
+suchtext = None
+suchfeld = None
+liste = None
+detailbereich = None
+status_text = None
+
+
+def laufzeitdaten_initialisieren():
+    """Laedt und vervollstaendigt die Kontakte fuer den Programmstart."""
+
+    global kontaktliste, angezeigte_kontakte
+
+    kontaktliste = []
+    for geladener_kontakt in datei.kontakte_laden():
+        kontakt = kontakt_vervollstaendigen(geladener_kontakt)
+        if (
             kontakt[FOTO_FELD]
-        ) is None
-    ):
-        kontakt[FOTO_FELD] = ""
-    kontaktliste.append(kontakt)
+            and kontaktfoto.verwalteten_pfad_aufloesen(
+                kontakt[FOTO_FELD]
+            ) is None
+        ):
+            kontakt[FOTO_FELD] = ""
+        kontaktliste.append(kontakt)
 
-kontaktliste = kontaktlogik.kontakte_sortieren(
-    kontaktliste
-)
-angezeigte_kontakte = kontaktliste.copy()
-
-
-fenster = tk.Tk()
-fenster.title(FENSTER_TITEL)
-fenster.geometry(f"{FENSTER_BREITE}x{FENSTER_HOEHE}")
-fenster.minsize(
-    FENSTER_MIN_BREITE,
-    FENSTER_MIN_HOEHE,
-)
-fenster.configure(
-    bg=FARBE_HINTERGRUND,
-)
+    kontaktliste = kontaktlogik.kontakte_sortieren(kontaktliste)
+    angezeigte_kontakte = kontaktliste.copy()
 
 
+def oberflaeche_initialisieren():
+    """Erzeugt das Fenster und alle Widgets der Anwendung."""
 
-ueberschrift = tk.Label(
-    fenster,
-    text="Mein Kontaktbuch",
-    font=SCHRIFT_TITEL
-    
-)
-ueberschrift.pack(pady=(20, 15))
+    global fenster, suchtext, suchfeld, liste, detailbereich, status_text
 
+    fenster = tk.Tk()
+    fenster.title(FENSTER_TITEL)
+    fenster.geometry(f"{FENSTER_BREITE}x{FENSTER_HOEHE}")
+    fenster.minsize(FENSTER_MIN_BREITE, FENSTER_MIN_HOEHE)
+    fenster.configure(bg=FARBE_HINTERGRUND)
 
-suchbereich = tk.Frame(fenster)
-suchbereich.pack(fill="x", padx=30, pady=(0, 15))
-
-such_label = tk.Label(
-    suchbereich,
-    text="Suche:",
-    
-)
-such_label.pack(side="left", padx=(0, 10))
-
-suchtext = tk.StringVar()
-
-suchfeld = tk.Entry(
-    suchbereich,
-    textvariable=suchtext,
-    font=SCHRIFT_UNTERTITEL,
-    
-    relief="solid",
-    bd=1,
-)
-suchfeld.pack(side="left", fill="x", expand=True, ipady=6)
-
-
-hauptbereich = tk.Frame(fenster)
-hauptbereich.pack(
-    fill="both",
-    expand=True,
-    padx=30,
-    pady=(0, 20),
-)
-
-
-listenbereich = tk.Frame(
-    hauptbereich,
-        highlightthickness=1,
-)
-listenbereich.pack(
-    side="left",
-    fill="both",
-    padx=(0, 12),
-)
-
-listen_ueberschrift = tk.Label(
-    listenbereich,
-    text="Kontakte",
-    font=SCHRIFT_UNTERTITEL
+    ueberschrift = tk.Label(
+        fenster,
+        text="Mein Kontaktbuch",
+        font=SCHRIFT_TITEL,
     )
-listen_ueberschrift.pack(
-    anchor="w",
-    padx=15,
-    pady=(15, 10),
-)
+    ueberschrift.pack(pady=(20, 15))
 
-listeninhalt = tk.Frame(
-    listenbereich,
-   
-)
-listeninhalt.pack(
-    fill="both",
-    expand=True,
-    padx=10,
-    pady=(0, 10),
-)
+    suchbereich = tk.Frame(fenster)
+    suchbereich.pack(fill="x", padx=30, pady=(0, 15))
+    such_label = tk.Label(suchbereich, text="Suche:")
+    such_label.pack(side="left", padx=(0, 10))
 
-scrollbar = tk.Scrollbar(listeninhalt)
-scrollbar.pack(side="right", fill="y")
+    suchtext = tk.StringVar()
+    suchfeld = tk.Entry(
+        suchbereich,
+        textvariable=suchtext,
+        font=SCHRIFT_UNTERTITEL,
+        relief="solid",
+        bd=1,
+    )
+    suchfeld.pack(side="left", fill="x", expand=True, ipady=6)
 
-liste = tk.Listbox(
-    listeninhalt,
-    width=28,
-    font=SCHRIFT_UNTERTITEL,
-    
-    selectforeground="white",
-    relief="flat",
-    bd=0,
-    highlightthickness=0,
-    yscrollcommand=scrollbar.set,
-)
-liste.pack(
-    side="left",
-    fill="both",
-    expand=True,
-)
+    hauptbereich = tk.Frame(fenster)
+    hauptbereich.pack(fill="both", expand=True, padx=30, pady=(0, 20))
+    listenbereich = tk.Frame(hauptbereich, highlightthickness=1)
+    listenbereich.pack(side="left", fill="both", padx=(0, 12))
+    listen_ueberschrift = tk.Label(
+        listenbereich,
+        text="Kontakte",
+        font=SCHRIFT_UNTERTITEL,
+    )
+    listen_ueberschrift.pack(anchor="w", padx=15, pady=(15, 10))
 
-scrollbar.config(command=liste.yview)
+    listeninhalt = tk.Frame(listenbereich)
+    listeninhalt.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+    scrollbar = tk.Scrollbar(listeninhalt)
+    scrollbar.pack(side="right", fill="y")
+    liste = tk.Listbox(
+        listeninhalt,
+        width=28,
+        font=SCHRIFT_UNTERTITEL,
+        selectforeground="white",
+        relief="flat",
+        bd=0,
+        highlightthickness=0,
+        yscrollcommand=scrollbar.set,
+    )
+    liste.pack(side="left", fill="both", expand=True)
+    scrollbar.config(command=liste.yview)
 
+    detailbereich = tk.Frame(
+        hauptbereich,
+        highlightthickness=1,
+        padx=25,
+        pady=20,
+    )
+    detailbereich.pack(side="left", fill="both", expand=True)
 
-detailbereich = tk.Frame(
-    hauptbereich,
-       highlightthickness=1,
-    padx=25,
-    pady=20,
-)
-detailbereich.pack(
-    side="left",
-    fill="both",
-    expand=True,
-)
-
-
-status_text = tk.StringVar()
-
-statusleiste = tk.Label(
-    fenster,
-    textvariable=status_text,
-    anchor="w",
-    font=SCHRIFT_KLEIN,
-    bg=FARBE_PRIMAER,
-    fg="white",
-    padx=12,
-    pady=6,
-)
-
-statusleiste.pack(
-    side="bottom",
-    fill="x",
-)
+    status_text = tk.StringVar()
+    statusleiste = tk.Label(
+        fenster,
+        textvariable=status_text,
+        anchor="w",
+        font=SCHRIFT_KLEIN,
+        bg=FARBE_PRIMAER,
+        fg="white",
+        padx=12,
+        pady=6,
+    )
+    statusleiste.pack(side="bottom", fill="x")
 
 
 def status_aktualisieren():
@@ -1017,10 +970,6 @@ def startansicht_anzeigen():
     buttonbereich_erstellen()
 
 
-kontaktliste_aktualisieren()
-startansicht_anzeigen()
-menueleiste_erstellen()
-
 def kontakt_mit_enter_bearbeiten(event=None):
     if liste.curselection():
         kontakt_bearbeiten_formular()
@@ -1037,21 +986,10 @@ def neuen_kontakt_oeffnen(event=None):
 
 
 
-liste.bind(
-    "<<ListboxSelect>>",
-    kontakt_auswahl_anzeigen,
-)
-
-
 def kontakt_doppelklick(event=None):
     if liste.curselection():
         kontakt_bearbeiten_formular()
 
-
-liste.bind(
-    "<Double-Button-1>",
-    kontakt_doppelklick,
-)
 
 def zur_kontaktliste_wechseln(event=None):
     if liste.size() > 0:
@@ -1061,47 +999,37 @@ def zur_kontaktliste_wechseln(event=None):
         liste.activate(0)
         kontakt_auswahl_anzeigen()
 
-suchfeld.bind(
-    "<Down>",
-    zur_kontaktliste_wechseln,
-)
+def ereignisse_binden():
+    """Registriert Ereignisse erst nach dem vollstaendigen GUI-Aufbau."""
 
-liste.bind(
-    "<Return>",
-    kontakt_mit_enter_bearbeiten,
-)
+    liste.bind("<<ListboxSelect>>", kontakt_auswahl_anzeigen)
+    liste.bind("<Double-Button-1>", kontakt_doppelklick)
+    suchfeld.bind("<Down>", zur_kontaktliste_wechseln)
+    liste.bind("<Return>", kontakt_mit_enter_bearbeiten)
+    liste.bind("<Delete>", kontakt_mit_entfernen_loeschen)
+    fenster.bind("<Control-n>", neuen_kontakt_oeffnen)
+    fenster.bind("<Control-f>", suchfeld_fokussieren)
+    fenster.bind("<Escape>", lambda event: startansicht_anzeigen())
+    fenster.bind(
+        "<Control-i>",
+        lambda event: kontakte_aus_datei_importieren(),
+    )
+    suchtext.trace_add("write", kontakte_filtern)
+    fenster.protocol("WM_DELETE_WINDOW", programm_beenden)
 
-liste.bind(
-    "<Delete>",
-    kontakt_mit_entfernen_loeschen,
-)
 
-fenster.bind(
-    "<Control-n>",
-    neuen_kontakt_oeffnen,
-)
+def main():
+    """Initialisiert und startet die vollstaendige Anwendung."""
 
-fenster.bind(
-    "<Control-f>",
-    suchfeld_fokussieren,
-)
+    laufzeitdaten_initialisieren()
+    oberflaeche_initialisieren()
+    kontaktliste_aktualisieren()
+    startansicht_anzeigen()
+    menueleiste_erstellen()
+    ereignisse_binden()
+    suchfeld.focus_set()
+    fenster.mainloop()
 
-fenster.bind(
-    "<Escape>",
-    lambda event: startansicht_anzeigen(),
-)
-fenster.bind(
-    "<Control-i>",
-    lambda event: kontakte_aus_datei_importieren(),
-)
 
-suchtext.trace_add("write", kontakte_filtern)
-
-suchfeld.focus_set()
-
-fenster.protocol(
-    "WM_DELETE_WINDOW",
-    programm_beenden
-)
-
-fenster.mainloop()
+if __name__ == "__main__":
+    main()
